@@ -1,0 +1,21 @@
+# Node.js dependencies
+node_modules/
+
+# Environment variables
+.env
+.env.local
+
+# System files
+.DS_Store
+
+# Logs
+*.log
+
+# Compiled files
+*.class
+*.o
+*.exe
+
+# IDE settings
+.idea/
+.vscode/
