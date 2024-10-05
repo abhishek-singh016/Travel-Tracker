@@ -29,49 +29,57 @@ const port = 3000;
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
-app.get("/", async (req, res) => {
-  try {
-    const result = await db.query("SELECT country_code FROM visited_countries");
-    let total = 0;
+async function checkVisisted() {
+  const result = await db.query("SELECT country_code FROM visited_countries");
     let countries = [];
 
     result.rows.forEach((country) => {
       countries.push(country.country_code);
-      total++;
     });
+    return countries;
+}
 
-    res.render("index.ejs", { countries: countries, total: total });
-  } catch (err) {
-    console.error("Error executing queries", err.stack);
-    res.status(500).send("Server error");
-  }
+app.get("/", async (req, res) => {
+  const countries = await checkVisisted();
+  res.render("index.ejs", {countries: countries, total: countries.length});
 });
 
 app.post("/add", async (req, res) => {
+  const countryName = req.body["country"];
+  console.log(countryName);
   try {
-    const countryName = req.body["country"];
-    console.log(countryName);
-
     const resultedCountryCode = await db.query(
       `SELECT country_code FROM countries WHERE country_name = $1`,
       [countryName]
     );
 
-    if (resultedCountryCode.rows.length !== 0) {
-      const data = resultedCountryCode.rows[0];
-      const countryCode = data.country_code;
+    const data = resultedCountryCode.rows[0];
+    const countryCode = data.country_code;
 
+    try {
       await db.query(
         `INSERT INTO visited_countries (country_code) VALUES ($1)`,
         [countryCode]
       );
       res.redirect("/");
-    } else {
-      res.status(404).send("Country not found");
-    }
-  } catch (error) {
-    console.error("Error processing request", error);
-    res.status(500).send({ error: "An unexpected error occurred." });
+    } catch (err) {
+      console.log(err);
+      const countries = await checkVisisted();
+      res.render("index.ejs",{
+        countries: countries,
+        total: countries.length,
+        error: "Country has already been added, try again.",
+      });
+    } 
+    
+  } catch (err) {
+    console.log(err);
+    const countries = await checkVisisted();
+    res.render("index.ejs", {
+      countries: countries,
+      total: countries.length,
+      error: "Country name does not exist, try again.",
+    });
   }
 });
 
