@@ -41,8 +41,7 @@ async function checkVisisted() {
 
 app.get("/", async (req, res) => {
   const countries = await checkVisisted();
-  const color = '#008080'
-  res.render("index.ejs", {countries: countries, total: countries.length, color: color});
+  res.render("index.ejs", {countries: countries, total: countries.length});
 });
 
 app.post("/add", async (req, res) => {
@@ -55,10 +54,7 @@ app.post("/add", async (req, res) => {
     );
 
     const data = resultedCountryCode.rows[0];
-    let countryCode = data.country_code;
-    if(countryCode === 'IO'){
-      countryCode = 'IN';
-    }
+    const countryCode = data.country_code;
 
     try {
       await db.query(
